@@ -1,7 +1,44 @@
-import 'package:flutter/material.dart';
+import 'dart:io';
 
-class MemoriesManagementScreen extends StatelessWidget {
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:location/location.dart';
+
+import './map_screen.dart';
+
+import '../helpers/location_helper.dart';
+
+class MemoriesManagementScreen extends StatefulWidget {
   static const route = 'memories-management';
+
+  @override
+  _MemoriesManagementScreenState createState() =>
+      _MemoriesManagementScreenState();
+}
+
+class _MemoriesManagementScreenState extends State<MemoriesManagementScreen> {
+  File _image;
+  String _mapPreview;
+
+  Future<void> _getImage() async {
+    var image = await ImagePicker.pickImage(source: ImageSource.camera);
+
+    setState(() {
+      _image = image;
+    });
+  }
+
+  Future<void> _getLocation() async {
+    Location currentLocation = Location();
+    LocationData locationData = await currentLocation.getLocation();
+
+    var selectedLocation = await Navigator.of(context)
+        .pushNamed(MapScreen.route, arguments: locationData);
+    print(LocationHelper().getStaticMapImage(selectedLocation));
+    setState(() {
+      _mapPreview = LocationHelper().getStaticMapImage(selectedLocation);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,27 +65,35 @@ class MemoriesManagementScreen extends StatelessWidget {
             Container(
               height: mediaQuery.size.height / 3,
               color: Colors.black12,
-              child: Center(
-                child: IconButton(
-                  color: Theme.of(context).primaryColor,
-                  iconSize: 70,
-                  icon: Icon(Icons.add_a_photo),
-                  onPressed: () => print('alo'),
-                ),
-              ),
+              child: _image != null
+                  ? Image.file(
+                      _image,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    )
+                  : Center(
+                      child: IconButton(
+                        color: Theme.of(context).primaryColor,
+                        iconSize: 70,
+                        icon: Icon(Icons.add_a_photo),
+                        onPressed: _getImage,
+                      ),
+                    ),
             ),
             Divider(),
             Container(
               height: mediaQuery.size.height / 3,
               color: Colors.black12,
-              child: Center(
-                child: IconButton(
-                  color: Theme.of(context).primaryColor,
-                  iconSize: 70,
-                  icon: Icon(Icons.add_location),
-                  onPressed: () => print('alo'),
-                ),
-              ),
+              child: _mapPreview == null
+                  ? Center(
+                      child: IconButton(
+                        color: Theme.of(context).primaryColor,
+                        iconSize: 70,
+                        icon: Icon(Icons.add_location),
+                        onPressed: _getLocation,
+                      ),
+                    )
+                  : Image.network(_mapPreview),
             ),
             Divider(),
             TextField(

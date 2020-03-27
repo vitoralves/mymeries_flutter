@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import './screens/home_screen.dart';
 import './screens/memories_management_screen.dart';
+import './screens/map_screen.dart';
 
 void main() => runApp(MyApp());
 
@@ -18,6 +19,7 @@ class MyApp extends StatelessWidget {
       home: HomeScreen(),
       routes: {
         MemoriesManagementScreen.route: (ctx) => MemoriesManagementScreen(),
+        MapScreen.route: (_) => MapScreen(),
       },
     );
   }
