@@ -22,16 +22,18 @@ class MemoriesManagementScreen extends StatefulWidget {
 }
 
 class _MemoriesManagementScreenState extends State<MemoriesManagementScreen> {
+  Memorie _memorie = Memorie();
+  TextEditingController _descriptionController = TextEditingController();
   bool _loading = false;
-  File _image;
-  LatLng _selectedLocation;
   String _mapPreview;
+  bool _isInit = true;
 
   Future<void> _getImage() async {
     var image = await ImagePicker.pickImage(source: ImageSource.camera);
-
+    Memorie memorie = _memorie;
+    memorie.image = image.path;
     setState(() {
-      _image = image;
+      _memorie = memorie;
     });
   }
 
@@ -40,46 +42,55 @@ class _MemoriesManagementScreenState extends State<MemoriesManagementScreen> {
     LocationData locationData = await currentLocation.getLocation();
 
     var selectedLocation = await Navigator.of(context)
-        .pushNamed(MapScreen.route, arguments: locationData);
+        .pushNamed(MapScreen.route, arguments: locationData) as LatLng;
 
     setState(() {
-      _selectedLocation = selectedLocation;
+      _memorie.latitude = selectedLocation.latitude;
+      _memorie.longitude = selectedLocation.longitude;
       _mapPreview = LocationHelper().getStaticMapImage(selectedLocation);
     });
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_isInit) {
+      final int id = ModalRoute.of(context).settings.arguments;
+      if (id != null) {
+        _memorie = Provider.of<MemorieProvider>(context).getById(id);
+        _mapPreview = LocationHelper()
+            .getStaticMapImage(LatLng(_memorie.latitude, _memorie.longitude));
+        _descriptionController.text = _memorie.description;
+      }
+    }
+
+    _isInit = false;
+  }
+
+  @override
   Widget build(BuildContext context) {
     final mediaQuery = MediaQuery.of(context);
-    TextEditingController _descriptionController = TextEditingController();
 
     void _save() async {
       setState(() {
         _loading = true;
       });
       try {
-        if (_image == null ||
-            _selectedLocation == null ||
+        if (_memorie.image == null ||
+            _memorie.latitude == null ||
             _descriptionController.text == null) {
           return;
         }
 
-        String formattedAddress = await LocationHelper.getAddress(
-          _selectedLocation.latitude,
-          _selectedLocation.longitude,
+        _memorie.formattedAddress = await LocationHelper.getAddress(
+          _memorie.latitude,
+          _memorie.longitude,
         );
 
-        Memorie memorie = Memorie(
-          null,
-          _image.path,
-          _selectedLocation.latitude,
-          _selectedLocation.longitude,
-          _descriptionController.text,
-          formattedAddress,
-        );
+        _memorie.description = _descriptionController.text;
 
         await Provider.of<MemorieProvider>(context, listen: false)
-            .insert(memorie);
+            .insert(_memorie);
 
         Navigator.of(context).pop();
       } catch (err) {
@@ -113,11 +124,17 @@ class _MemoriesManagementScreenState extends State<MemoriesManagementScreen> {
                   Container(
                     height: mediaQuery.size.height / 3,
                     color: Colors.black12,
-                    child: _image != null
-                        ? Image.file(
-                            _image,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
+                    child: _memorie.image != null
+                        ? GestureDetector(
+                            onTap: _getImage,
+                            child: Hero(
+                              tag: _memorie.id == null ? 'tag' : _memorie.id,
+                              child: Image.file(
+                                File(_memorie.image),
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
                           )
                         : Center(
                             child: IconButton(
@@ -141,7 +158,10 @@ class _MemoriesManagementScreenState extends State<MemoriesManagementScreen> {
                               onPressed: _getLocation,
                             ),
                           )
-                        : Image.network(_mapPreview),
+                        : GestureDetector(
+                            onTap: _getLocation,
+                            child: Image.network(_mapPreview),
+                          ),
                   ),
                   Divider(),
                   TextField(

@@ -6,8 +6,14 @@ class Memorie {
   String description;
   String formattedAddress;
 
-  Memorie(this.id, this.image, this.latitude, this.longitude, this.description,
-      this.formattedAddress);
+  Memorie([
+    this.id,
+    this.image,
+    this.latitude,
+    this.longitude,
+    this.description,
+    this.formattedAddress,
+  ]);
 
   Map<String, Object> toMap() {
     return {

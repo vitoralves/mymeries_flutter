@@ -21,7 +21,6 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
       ),
-      backgroundColor: Colors.grey,
       body: FutureBuilder(
           future: Provider.of<MemorieProvider>(context, listen: false).get(),
           builder: (context, snapshot) {
@@ -34,13 +33,24 @@ class HomeScreen extends StatelessWidget {
               builder: (ctx, provider, _) {
                 return ListView.separated(
                   itemBuilder: (ctx, index) {
-                    return ListTile(
-                      leading: Image.file(
-                        File(provider.getMemories()[index].image),
+                    return Hero(
+                      tag: provider.getMemories()[index].id,
+                      child: Card(
+                        elevation: 10,
+                        child: ListTile(
+                          onTap: () => Navigator.of(context).pushNamed(
+                            MemoriesManagementScreen.route,
+                            arguments: provider.getMemories()[index].id,
+                          ),
+                          leading: Image.file(
+                            File(provider.getMemories()[index].image),
+                          ),
+                          title: Text(
+                              provider.getMemories()[index].formattedAddress),
+                          subtitle:
+                              Text(provider.getMemories()[index].description),
+                        ),
                       ),
-                      title:
-                          Text(provider.getMemories()[index].formattedAddress),
-                      subtitle: Text(provider.getMemories()[index].description),
                     );
                   },
                   separatorBuilder: (ctx, _) => Divider(),

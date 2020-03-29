@@ -22,6 +22,7 @@ class MemorieProvider with ChangeNotifier {
   }
 
   Future<void> get() async {
+    _memories = [];
     List<Map<String, dynamic>> records = await dbHelper.get(table);
     for (var item in records) {
       Memorie m = Memorie(
@@ -35,5 +36,9 @@ class MemorieProvider with ChangeNotifier {
       _memories.add(m);
     }
     notifyListeners();
+  }
+
+  Memorie getById(int id) {
+    return _memories.firstWhere((m) => m.id == id);
   }
 }
